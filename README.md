@@ -59,6 +59,37 @@ npm run seed:run
 ```
 
 ## Generate SSL Cert
+### First, Create cert folder
 ```bash
-UPDATE SOON
+mkdir cert && cd cert
 ```
+Create cert.cnf from example-config.cnf
+
+```bash
+cp example-config.cnf cert.cnf
+```
+
+Copy CA Certificate from CLOUD CENTRAL NODE
+
+### Create Self-Signed Certificates using OpenSSL
+```bash
+openssl req -newkey rsa:2048 \
+-keyout edge-key.pem \
+-out edge-req.pem \
+-config cert.cnf \
+-nodes -days 365
+```
+
+### Generate SSL certificate With self signed CA
+```bash
+openssl x509 -req -days 365 -sha256 -extfile cert.cnf -set_serial 01 \
+   -in edge-req.pem \
+   -out edge-cert.pem \
+   -CA ca-cert.pem \
+   -CAkey ca-key.pem
+```
+
+### Verify with root CA 
+```bash
+openssl verify -CAfile ca-cert.pem cloud-cert.pem
+``` 
