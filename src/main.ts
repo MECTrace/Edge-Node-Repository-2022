@@ -13,13 +13,13 @@ async function bootstrap() {
   let httpsOptions: { key: Buffer; cert: Buffer };
   if (process.env.NODE_ENV !== 'DEV') {
     httpsOptions = {
-      key: fs.readFileSync(`cert/${process.env.NODE_KEY}`),
-      cert: fs.readFileSync(`cert/${process.env.NODE_CERT}`),
+      key: fs.readFileSync('cert/edge-key.pem'),
+      cert: fs.readFileSync('cert/edge-cert.pem'),
     };
   }
 
   process.env.NODE_EXTRA_CA_CERTS = fs
-    .readFileSync(`cert/${process.env.CA_CERT}`)
+    .readFileSync(`cert/ca-cert.pem`)
     .toString();
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
