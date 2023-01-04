@@ -9,12 +9,28 @@ import { WEB_SOCKET_GATEWAY } from './constants';
 import { SocketIoClientProvider } from './socket-io-client-proxy/socket-io-client.provider';
 import { SocketIoClientStrategy } from './socket-io-client-proxy/socket-io-client.strategy';
 
+const httpCert = () => {
+  const keyPath = 'cert/edge-key.pem';
+  const certPath = 'cert/edge-cert.pem';
+  if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
+    return {
+      key: fs.readFileSync(keyPath),
+      cert: fs.readFileSync(certPath),
+    };
+  }
+  return {
+    key: undefined,
+    cert: undefined,
+  };
+};
+
 async function bootstrap() {
   let httpsOptions: { key: Buffer; cert: Buffer };
-  if (process.env.NODE_ENV !== 'DEV') {
+  const { key, cert } = httpCert();
+  if (!!key && !!cert) {
     httpsOptions = {
-      key: fs.readFileSync('cert/edge-key.pem'),
-      cert: fs.readFileSync('cert/edge-cert.pem'),
+      key,
+      cert,
     };
   }
 

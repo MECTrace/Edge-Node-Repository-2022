@@ -86,9 +86,7 @@ export class CertificateService {
       const certificateIssue =
         certExpiredDay < currentDate ? 'Certificate Expired' : 'None';
 
-      const rootCA = new X509Certificate(
-        fs.readFileSync(`cert/${process.env.CA_CERT}`),
-      );
+      const rootCA = new X509Certificate(fs.readFileSync('cert/ca-cert.pem'));
 
       const isIssued = certificateData.checkIssued(rootCA);
 
