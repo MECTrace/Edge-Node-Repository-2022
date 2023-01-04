@@ -34,9 +34,10 @@ async function bootstrap() {
     };
   }
 
-  process.env.NODE_EXTRA_CA_CERTS = fs
-    .readFileSync(`cert/ca-cert.pem`)
-    .toString();
+  const rootCA = 'cert/ca-cert.pem';
+  if (fs.existsSync(rootCA)) {
+    process.env.NODE_EXTRA_CA_CERTS = fs.readFileSync(rootCA).toString();
+  }
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     httpsOptions,

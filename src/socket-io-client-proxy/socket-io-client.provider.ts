@@ -10,8 +10,9 @@ export class SocketIoClientProvider {
   private socket: Socket;
 
   private connect() {
+    const rootCA = 'cert/ca-cert.pem';
     this.socket = io(process.env.CLOUD_URL, {
-      ca: fs.readFileSync('cert/ca-cert.pem').toString(),
+      ca: fs.existsSync(rootCA) && fs.readFileSync(rootCA).toString(),
     });
     return this.socket;
   }
