@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Delete, Get } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import * as fs from 'fs';
 import { EventService } from 'src/modules/event/service/event.service';
@@ -33,6 +33,20 @@ export class CertificateController {
     } catch (err) {
       console.log(err);
       return { status: 'failed' };
+    }
+  }
+
+  @Delete()
+  @ApiOkResponse({
+    status: 200,
+    description: 'Delete Certificate',
+  })
+  async deleteCertificate() {
+    try {
+      await this.certificateService.removeCertificate();
+      return { status: 'succeeded' };
+    } catch (error) {
+      console.log(error);
     }
   }
 }

@@ -1,23 +1,21 @@
 import {
   Body,
   Controller,
-  Get,
-  Param,
   Post,
+  Res,
   UploadedFile,
   UseInterceptors,
-  Res,
 } from '@nestjs/common';
-import { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
-import { FileService } from '../../file/service/file.service';
-import { EventService } from '../service/event.service';
-import { NodeService } from 'src/modules/node/service/node.service';
+import { Response } from 'express';
 import { SocketEvents, SocketStatus, STATUS } from 'src/constants';
-import { IEventResult, IGetBySendNodeId, IInsertResult } from '../interface';
+import { NodeService } from 'src/modules/node/service/node.service';
 import { SocketIoClientProxyService } from 'src/socket-io-client-proxy/socket-io-client-proxy.service';
+import { FileService } from '../../file/service/file.service';
 import { FileUploadDto } from '../dto/fileUpload.dto';
+import { IEventResult, IGetBySendNodeId, IInsertResult } from '../interface';
+import { EventService } from '../service/event.service';
 
 @ApiTags('event')
 @Controller('event')

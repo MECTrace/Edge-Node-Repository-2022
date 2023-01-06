@@ -165,4 +165,25 @@ export class CertificateService {
       total: issuedCertificate.length || 0,
     };
   }
+
+  async removeCertificate() {
+    try {
+      // fs.unlinkSync('cert/edge-cert.txt');
+      // fs.unlinkSync('cert/edge-key.txt');
+      // fs.unlinkSync('cert/edge-req.txt');
+      await this.certificateRepository
+        .createQueryBuilder()
+        .update(Certificate)
+        .set({
+          certificateIssue: 'No Certificate',
+          isIssued: false,
+        })
+        .where({
+          nodeId: process.env.NODE_ID,
+        })
+        .execute();
+    } catch (err) {
+      console.error(err);
+    }
+  }
 }
