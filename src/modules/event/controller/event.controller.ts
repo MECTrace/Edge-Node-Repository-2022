@@ -6,6 +6,7 @@ import {
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
@@ -16,6 +17,11 @@ import { FileService } from '../../file/service/file.service';
 import { FileUploadDto } from '../dto/fileUpload.dto';
 import { IEventResult, IGetBySendNodeId, IInsertResult } from '../interface';
 import { EventService } from '../service/event.service';
+import { existsSync, mkdirSync } from 'fs';
+import { diskStorage } from 'multer';
+import { FileUploadFromNodeDto } from '../dto/fileUploadFromNode.dto';
+import { lastValueFrom } from 'rxjs';
+import * as FormData from 'form-data';
 
 @ApiTags('event')
 @Controller('event')
@@ -24,135 +30,122 @@ export class EventController {
     private eventService: EventService,
     private fileService: FileService,
     private nodeService: NodeService,
+    private httpService: HttpService,
     private readonly socketIoClientProxyService: SocketIoClientProxyService,
   ) {}
 
   @Post('upload')
-  @UseInterceptors(FileInterceptor('fileUpload'))
+  @UseInterceptors(
+    FileInterceptor('fileUpload', {
+      storage: diskStorage({
+        // Destination storage path details
+        destination: (req: any, file: any, cb: any) => {
+          const uploadPath = process.env.UPLOAD_LOCATION;
+          // Create folder if doesn't exist
+          if (!existsSync(uploadPath)) {
+            mkdirSync(uploadPath);
+          }
+          cb(null, uploadPath);
+        },
+        // File modification details
+        filename: (req: any, file: any, cb: any) => {
+          // Calling the callback passing the original name
+          cb(null, file.originalname);
+        },
+      }),
+    }),
+  )
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     type: FileUploadDto,
   })
-  async upload(
+  upload(@UploadedFile() file: Express.Multer.File) {
+    console.log(file);
+  }
+
+  @Post('uploadFromNode')
+  @UseInterceptors(FileInterceptor('fileUpload'))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    type: FileUploadFromNodeDto,
+  })
+  async uploadFromNode(
     @UploadedFile() file: Express.Multer.File,
     @Body() post: { sendNode: string },
-    @Res() res: Response,
   ) {
-    const receiveNodeId = process.env.NODE_ID;
-    const sendNode = post.sendNode;
-    const nodeResult = await this.nodeService.findOne(sendNode);
-    const sendNodeId = nodeResult.id;
-    let tempId: string;
+    // find limit to accept send file, send request to cloud central
+    const policyURL =
+      process.env.CLOUD_URL +
+      `/api/policyManager/getPolicyByNodeId/${process.env.NODE_ID}`;
 
-    const name =
-      file?.originalname.substring(0, file.originalname.lastIndexOf('.')) || '';
+    const { data } = await lastValueFrom(this.httpService.get(policyURL));
 
-    const findFileId: string = await this.fileService.findByFileName(name);
+    const nodeName = data[0].nodeName as string;
+    const cpuOverPercent = +data[0].cpuOverPercent;
+    const cpuLessThanPercent = +data[0].cpuLessThanPercent;
+    const numberResendNode = +data[0].numberResendNode;
 
-    const optionEvent = <IGetBySendNodeId>{
-      sendNodeId,
-      receiveNodeId,
-    };
-    this.eventService
-      .upload(file)
-      .then(async () => {
-        if (!findFileId) {
-          const createdFile: IInsertResult = await this.fileService.create(
-            file,
-          );
-          const insertedFileId: string = createdFile.raw[0].id;
-          const createdEvent: IInsertResult = await this.eventService.create({
-            ...optionEvent,
-            status: STATUS.PENDING,
-            fileId: insertedFileId,
-          });
+    // util func to set timeout
+    async function timeout(ms: number) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
 
-          const insertedEventId: string = createdEvent.raw[0].id;
+    // send file
+    const postBody = { sendNode: post.sendNode, cpu_limit: cpuOverPercent };
+    const { status, eventId } = await this.eventService.uploadFromNode(
+      file,
+      postBody,
+    );
 
-          this.socketIoClientProxyService.emit(SocketEvents.NODE_INIT, {
-            id: insertedEventId,
-            receiveNodeId,
-            sendNodeId,
-            status: SocketStatus.PENDING,
-          });
+    // if send fail, we redirect to send others
+    if (!status) {
+      await timeout(3000);
 
-          return { id: insertedEventId, fileId: insertedFileId };
-        } else {
-          const createdEvent: IInsertResult = await this.eventService.create({
-            ...optionEvent,
-            status: STATUS.PENDING,
-            fileId: findFileId,
-          });
-          const insertedEventId: string = createdEvent.raw[0].id;
+      const availableNodeURL =
+        process.env.CLOUD_URL +
+        `/api/node/getAvailableNode/${process.env.NODE_ID}/${cpuLessThanPercent}`;
 
-          this.socketIoClientProxyService.emit(SocketEvents.NODE_INIT, {
-            id: insertedEventId,
-            receiveNodeId,
-            sendNodeId,
-            status: SocketStatus.PENDING,
-          });
-          return { id: insertedEventId, fileId: findFileId };
-        }
-      })
-      .then(async ({ id, fileId }) => {
-        const ds: IEventResult[] = await this.eventService.getByFileId(fileId);
-        //update event first item
-        if (ds.length === 1) {
-          await this.eventService.update(ds[0].event_id, STATUS.SUCCESS);
-          tempId = ds[0].event_id;
-          setTimeout(() => {
-            this.socketIoClientProxyService.emit(SocketEvents.NODE_UPDATE, {
-              id,
-              receiveNodeId,
-              sendNodeId,
-              status: SocketStatus.SUCCESS,
-            });
-          }, 2000);
-        } else if (ds.length > 1) {
-          //if multi event , only update new event
-          const index = ds.length - 1;
-          tempId = ds[index].event_id;
-          await this.eventService.update(ds[index].event_id, STATUS.FAIL);
-          throw Error(ds[index].event_id);
-        } else {
-          return;
-        }
-        res.send({ status: true, message: '' });
-      })
-      .catch(async (data: { message: string }) => {
-        if (!findFileId) {
-          const rs: IInsertResult = await this.fileService.create({
-            ...file,
-            originalname: 'undefined',
-          });
+      const { data } = await lastValueFrom(
+        this.httpService.get(availableNodeURL),
+      );
 
-          await this.eventService.create({
-            ...optionEvent,
-            status: STATUS.FAIL,
-            fileId: rs.raw[0].id,
-          });
-        }
-        setTimeout(() => {
-          const id = data.message;
+      const receiveNode = data['availableNode']
 
-          this.socketIoClientProxyService.emit(SocketEvents.NODE_UPDATE, {
-            id,
-            receiveNodeId,
-            sendNodeId,
-            status: SocketStatus.FAIL,
-          });
-        }, 2000);
-        res.send({ status: false, message: data.message });
-      })
-      .finally(() => {
-        setTimeout(() => {
-          this.socketIoClientProxyService.emit(SocketEvents.NODE_UPDATE, {
-            id: tempId,
-            receiveNodeId,
-            sendNodeId,
-            status: SocketStatus.DONE,
-          });
-        }, 4000);
+      await this.eventService.reSend(file, {
+        sendNode: nodeName,
+        receiveNode: receiveNode,
+        numberResendNode: numberResendNode,
       });
+    }
+    return {
+      status: status,
+      eventId: eventId,
+    };
+  }
+
+  @Post('resend')
+  @UseInterceptors(FileInterceptor('fileUpload'))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    type: FileUploadFromNodeDto,
+  })
+  async reSend(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() post: { sendNode: string },
+  ) {
+    // find limit to accept send file
+    // policy's current node
+    const policyURL =
+      process.env.CLOUD_URL +
+      `/api/policyManager/getPolicyByNodeId/${process.env.NODE_ID}`;
+
+    const { data } = await lastValueFrom(this.httpService.get(policyURL));
+
+    // send file
+    const postBody = {
+      sendNode: post.sendNode,
+      cpu_limit: data[0].cpuOverPercent,
+    };
+    return this.eventService.uploadFromNode(file, postBody);
   }
 }

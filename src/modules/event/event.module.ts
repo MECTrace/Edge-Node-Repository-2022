@@ -9,12 +9,14 @@ import { NodeService } from '../node/service/node.service';
 import { Node } from '../node/entity/node.entity';
 import { SocketIoClientProxyService } from '../../socket-io-client-proxy/socket-io-client-proxy.service';
 import { SocketIoClientProvider } from '../../socket-io-client-proxy/socket-io-client.provider';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Event]),
     TypeOrmModule.forFeature([File]),
     TypeOrmModule.forFeature([Node]),
+    HttpModule,
   ],
   controllers: [EventController],
   providers: [

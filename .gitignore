@@ -45,3 +45,4 @@ lerna-debug.log*
 *.key
 *.pem
 v3.ext
+/upload

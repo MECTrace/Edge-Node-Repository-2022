@@ -9,18 +9,21 @@ export class FileService {
     @InjectRepository(File) public fileRepository: Repository<File>,
   ) {}
 
-  /**
-   * Find all Edges with corresponding RSUs, OBUs
-   * @returns {Promise<ListNodeDto>}
-   */
-  create = async (file: Express.Multer.File) => {
+  async create(prefix: string, file: Express.Multer.File) {
     const fileName =
       file.originalname.substring(0, file.originalname.lastIndexOf('.')) || '';
-    const fileType =
+    const fileExt =
       file.originalname.substring(
         file.originalname.lastIndexOf('.'),
         file.originalname.length,
       ) || '';
+
+    const fileType = fileName !== 'undefined' ? fileExt : 'undefined';
+    const path =
+      fileName !== 'undefined' ? 
+        `/${process.env.AZURE_STORAGE_CONTAINER}` +
+        `/${prefix}/${file.originalname}`
+        : 'undefined';
     return this.fileRepository
       .createQueryBuilder()
       .insert()
@@ -28,22 +31,32 @@ export class FileService {
       .values([
         {
           fileName,
-          fileType: fileName !== 'undefined' ? fileType : 'undefined',
-          path:
-            fileName !== 'undefined' ? `/${file.originalname}` : 'undefined',
+          fileType,
+          path,
         },
       ])
       .execute();
-  };
+  }
 
-  findByFileName = async (fileName: string): Promise<string> => {
-    const result: IFileResult[] = (await this.fileRepository
+  async findByPath(path: string): Promise<string> {
+    const rs: IFileResult[] = (await this.fileRepository
       .createQueryBuilder('file')
       .select()
       .where({
-        fileName,
+        path,
       })
       .execute()) as IFileResult[];
-    return result?.[0]?.file_id;
-  };
+    return rs?.[0]?.file_id;
+  }
+
+  async update(id: string, path: string) {
+    await this.fileRepository
+      .createQueryBuilder()
+      .update(File)
+      .set({ path })
+      .where({
+        id: id,
+      })
+      .execute();
+  }
 }
