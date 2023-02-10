@@ -126,6 +126,9 @@ export class EventService {
               headers: {
                 'Content-Type': 'multipart/form-data',
               },
+              httpsAgent: new https.Agent({
+                rejectUnauthorized: false,
+              }),
             }),
           );
         } catch {
@@ -223,9 +226,7 @@ export class EventService {
               headers: {
                 'Content-Type': 'multipart/form-data',
               },
-              httpsAgent: new https.Agent({
-                rejectUnauthorized: true,
-              }),
+              httpsAgent: httpsAgent,
             }),
           );
           isSuccess = data;
@@ -236,7 +237,7 @@ export class EventService {
                 'Content-Type': 'multipart/form-data',
               },
               httpsAgent: new https.Agent({
-                rejectUnauthorized: true,
+                rejectUnauthorized: false,
               }),
             }),
           );
