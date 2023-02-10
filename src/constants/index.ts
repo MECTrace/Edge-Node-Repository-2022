@@ -25,4 +25,5 @@ export const WEB_SOCKET_GATEWAY = {
 };
 
 const CERTIFICATE_FOLDER = 'cert/';
-export const ROOT_CA = CERTIFICATE_FOLDER + process.env.CA_CERT;
+// export const ROOT_CA = CERTIFICATE_FOLDER + process.env.CA_CERT;
+export const ROOT_CA = CERTIFICATE_FOLDER + 'ca-cert.pem';
