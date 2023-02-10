@@ -10,7 +10,7 @@ import { HttpService } from '@nestjs/axios';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
-import { SocketEvents, SocketStatus, STATUS } from 'src/constants';
+import { SocketEvents, SocketStatus, STATUS, ROOT_CA } from 'src/constants';
 import { NodeService } from 'src/modules/node/service/node.service';
 import { SocketIoClientProxyService } from 'src/socket-io-client-proxy/socket-io-client-proxy.service';
 import { FileService } from '../../file/service/file.service';
@@ -22,6 +22,8 @@ import { diskStorage } from 'multer';
 import { FileUploadFromNodeDto } from '../dto/fileUploadFromNode.dto';
 import { lastValueFrom } from 'rxjs';
 import * as FormData from 'form-data';
+import * as fs from 'fs';
+import * as https from 'https';
 
 @ApiTags('event')
 @Controller('event')
@@ -78,12 +80,33 @@ export class EventController {
       process.env.CLOUD_URL +
       `/api/policyManager/getPolicyByNodeId/${process.env.NODE_ID}`;
 
-    const { data } = await lastValueFrom(this.httpService.get(policyURL));
+    const httpsAgent = new https.Agent({
+      ca: fs.readFileSync(ROOT_CA).toString(),
+    });
 
-    const nodeName = data[0].nodeName as string;
-    const cpuOverPercent = +data[0].cpuOverPercent;
-    const cpuLessThanPercent = +data[0].cpuLessThanPercent;
-    const numberResendNode = +data[0].numberResendNode;
+    let policy: any;
+    try {
+      const { data } = await lastValueFrom(
+        this.httpService.get(policyURL, {
+          httpsAgent,
+        }),
+      );
+      policy = data;
+    } catch (err) {
+      const { data } = await lastValueFrom(
+        this.httpService.get(policyURL, {
+          httpsAgent: new https.Agent({
+            rejectUnauthorized: false,
+          }),
+        }),
+      );
+      policy = data;
+    }
+
+    const nodeName = policy[0].nodeName as string;
+    const cpuOverPercent = +policy[0].cpuOverPercent;
+    const cpuLessThanPercent = +policy[0].cpuLessThanPercent;
+    const numberResendNode = +policy[0].numberResendNode;
 
     // util func to set timeout
     async function timeout(ms: number) {
@@ -105,11 +128,26 @@ export class EventController {
         process.env.CLOUD_URL +
         `/api/node/getAvailableNode/${process.env.NODE_ID}/${cpuLessThanPercent}`;
 
-      const { data } = await lastValueFrom(
-        this.httpService.get(availableNodeURL),
-      );
+      let availableNodeData: any;
+      try {
+        const { data } = await lastValueFrom(
+          this.httpService.get(availableNodeURL, {
+            httpsAgent,
+          }),
+        );
+        availableNodeData = data;
+      } catch (err) {
+        const { data } = await lastValueFrom(
+          this.httpService.get(availableNodeURL, {
+            httpsAgent: new https.Agent({
+              rejectUnauthorized: false,
+            }),
+          }),
+        );
+        availableNodeData = data;
+      }
 
-      const receiveNode = data['availableNode']
+      const receiveNode = availableNodeData['availableNode']
 
       await this.eventService.reSend(file, {
         sendNode: nodeName,
@@ -139,12 +177,33 @@ export class EventController {
       process.env.CLOUD_URL +
       `/api/policyManager/getPolicyByNodeId/${process.env.NODE_ID}`;
 
-    const { data } = await lastValueFrom(this.httpService.get(policyURL));
+    const httpsAgent = new https.Agent({
+      ca: fs.readFileSync(ROOT_CA).toString(),
+    });
+
+    let policy: any;
+    try {
+      const { data } = await lastValueFrom(
+        this.httpService.get(policyURL, {
+          httpsAgent,
+        }),
+      );
+      policy = data;
+    } catch (err) {
+      const { data } = await lastValueFrom(
+        this.httpService.get(policyURL, {
+          httpsAgent: new https.Agent({
+            rejectUnauthorized: false,
+          }),
+        }),
+      );
+      policy = data;
+    }
 
     // send file
     const postBody = {
       sendNode: post.sendNode,
-      cpu_limit: data[0].cpuOverPercent,
+      cpu_limit: policy[0].cpuOverPercent,
     };
     return this.eventService.uploadFromNode(file, postBody);
   }

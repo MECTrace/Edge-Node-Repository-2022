@@ -8,11 +8,13 @@ import { Event } from '../entity/event.entity';
 import { IEventResult, IInsertResult } from '../interface';
 import { NodeService } from 'src/modules/node/service/node.service';
 import { FileService } from 'src/modules/file/service/file.service';
-import { SocketEvents, SocketStatus, STATUS } from 'src/constants';
+import { SocketEvents, SocketStatus, STATUS, ROOT_CA } from 'src/constants';
 import * as FormData from 'form-data';
 import { lastValueFrom } from 'rxjs';
 import { SocketIoClientProxyService } from 'src/socket-io-client-proxy/socket-io-client-proxy.service';
 import { HttpService } from '@nestjs/axios';
+import * as fs from 'fs';
+import * as https from 'https';
 
 export interface IGetBySendNodeId {
   fileId: string;
@@ -36,7 +38,7 @@ export class EventService {
   }
 
   constructor(
-    @InjectRepository(Event) 
+    @InjectRepository(Event)
     private eventRepository: Repository<Event>,
     private nodeService: NodeService,
     private fileService: FileService,
@@ -209,14 +211,41 @@ export class EventService {
 
       try {
         const url = node.nodeURL + '/api/event/resend';
-        const { data } = await lastValueFrom(
-          this.httpService.post(url, form, {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-          }),
-        );
-        console.log(data);
+
+        const httpsAgent = new https.Agent({
+          ca: fs.readFileSync(ROOT_CA).toString(),
+        });
+
+        let isSuccess: any;
+        try {
+          const { data } = await lastValueFrom(
+            this.httpService.post(url, form, {
+              headers: {
+                'Content-Type': 'multipart/form-data',
+              },
+              httpsAgent: new https.Agent({
+                rejectUnauthorized: true,
+              }),
+            }),
+          );
+          isSuccess = data;
+        } catch (err) {
+          const { data } = await lastValueFrom(
+            this.httpService.post(url, form, {
+              headers: {
+                'Content-Type': 'multipart/form-data',
+              },
+              httpsAgent: new https.Agent({
+                rejectUnauthorized: true,
+              }),
+            }),
+          );
+          isSuccess = data;
+        }
+
+        if (!isSuccess.status) {
+          throw Error();
+        }
         count += 1;
       } catch {
         // throw error

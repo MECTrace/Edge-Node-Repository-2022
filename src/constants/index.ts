@@ -23,3 +23,6 @@ export const WEB_SOCKET_GATEWAY = {
   credentials: true,
   preflightContinue: false,
 };
+
+const CERTIFICATE_FOLDER = 'cert/';
+export const ROOT_CA = CERTIFICATE_FOLDER + process.env.CA_CERT;
