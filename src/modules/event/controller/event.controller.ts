@@ -122,7 +122,7 @@ export class EventController {
 
     // if send fail, we redirect to send others
     if (!status) {
-      await timeout(3000);
+      // await timeout(3000);
 
       const availableNodeURL =
         process.env.CLOUD_URL +
