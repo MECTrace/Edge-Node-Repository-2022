@@ -5,7 +5,7 @@ import { Repository } from 'typeorm';
 import { File } from '../../file/entity/file.entity';
 import { Node } from '../../node/entity/node.entity';
 import { Event } from '../entity/event.entity';
-import { IEventResult, IInsertResult } from '../interface';
+import { IEventResult, IInsertResult, IGetBySendNodeId } from '../interface';
 import { NodeService } from 'src/modules/node/service/node.service';
 import { FileService } from 'src/modules/file/service/file.service';
 import { SocketEvents, SocketStatus, STATUS, ROOT_CA } from 'src/constants';
@@ -16,16 +16,6 @@ import { HttpService } from '@nestjs/axios';
 import * as fs from 'fs';
 import * as https from 'https';
 
-export interface IGetBySendNodeId {
-  fileId: string;
-  sendNode: string;
-  sendNodeId: string;
-  receiveNodeId: string;
-  receiveNode: string;
-  status: string;
-  createdAt: string;
-  fileType: string;
-}
 @Injectable()
 export class EventService {
   getBlobClient(fileName: string, containerName: string): BlockBlobClient {
@@ -63,11 +53,12 @@ export class EventService {
 
   async uploadFromNode(
     @UploadedFile() file: Express.Multer.File,
-    @Body() post: { sendNode: string; cpu_limit: number },
+    @Body() post: { sendNode: string; cpu_limit: number; policyName: string },
   ) {
     const receiveNodeId = process.env.NODE_ID;
     const sendNode = post.sendNode;
     const cpu_limit = post.cpu_limit;
+    const policyName = post.policyName;
     const nodeResult = await this.nodeService.findOne(sendNode);
     const sendNodeId = nodeResult.id;
     let fileId: string;
@@ -76,6 +67,7 @@ export class EventService {
     const optionEvent = <IGetBySendNodeId>{
       sendNodeId,
       receiveNodeId,
+      policyName,
     };
 
     const path =
@@ -193,14 +185,13 @@ export class EventService {
     @UploadedFile() file: Express.Multer.File,
     @Body()
     post: {
-      sendNode: string,
-      receiveNode: any,
-      numberResendNode: number,
+      sendNode: string;
+      receiveNode: any;
+      numberResendNode: number;
     },
   ) {
     let count = 0;
     for (const node of post.receiveNode) {
-      console.log(count, post.numberResendNode);
       if (count >= post.numberResendNode) {
         break;
       }
@@ -250,7 +241,7 @@ export class EventService {
         count += 1;
       } catch {
         // throw error
-        console.log('[Error] Cannot send file');
+        console.log('[Error] Cannot resend file');
       }
     }
   }

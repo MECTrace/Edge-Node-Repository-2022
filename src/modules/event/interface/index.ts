@@ -6,6 +6,7 @@ export interface IEventResult {
   event_status: string;
   event_createdAt: string;
   event_updatedAt: string;
+  event_policyName: string;
 }
 
 export interface IGetBySendNodeId {
@@ -17,6 +18,7 @@ export interface IGetBySendNodeId {
   status: string;
   createdAt: string;
   fileType: string;
+  policyName: string;
 }
 
 export interface IInsertResult {

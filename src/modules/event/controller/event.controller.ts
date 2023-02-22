@@ -2,14 +2,12 @@ import {
   Body,
   Controller,
   Post,
-  Res,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
-import { Response } from 'express';
 import { SocketEvents, SocketStatus, STATUS, ROOT_CA } from 'src/constants';
 import { NodeService } from 'src/modules/node/service/node.service';
 import { SocketIoClientProxyService } from 'src/socket-io-client-proxy/socket-io-client-proxy.service';
@@ -84,6 +82,7 @@ export class EventController {
       ca: fs.readFileSync(ROOT_CA).toString(),
     });
 
+    // chua update status vm
     let policy: any;
     try {
       const { data } = await lastValueFrom(
@@ -107,14 +106,14 @@ export class EventController {
     const cpuOverPercent = +policy[0].cpuOverPercent;
     const cpuLessThanPercent = +policy[0].cpuLessThanPercent;
     const numberResendNode = +policy[0].numberResendNode;
-
-    // util func to set timeout
-    async function timeout(ms: number) {
-      return new Promise((resolve) => setTimeout(resolve, ms));
-    }
+    const policyName = policy[0].policyName;
 
     // send file
-    const postBody = { sendNode: post.sendNode, cpu_limit: cpuOverPercent };
+    const postBody = {
+      sendNode: post.sendNode,
+      cpu_limit: cpuOverPercent,
+      policyName: policyName,
+    };
     const { status, eventId } = await this.eventService.uploadFromNode(
       file,
       postBody,
@@ -204,6 +203,7 @@ export class EventController {
     const postBody = {
       sendNode: post.sendNode,
       cpu_limit: policy[0].cpuOverPercent,
+      policyName: policy[0].policyName,
     };
     return this.eventService.uploadFromNode(file, postBody);
   }
