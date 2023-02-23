@@ -327,6 +327,7 @@ export class EventService {
     receiveNodeId,
     fileId,
     status,
+    policyName,
   }: IGetBySendNodeId) {
     return this.eventRepository
       .createQueryBuilder()
@@ -338,6 +339,7 @@ export class EventService {
           receiveNodeId,
           status,
           fileId,
+          policyName,
         },
       ])
       .execute();
