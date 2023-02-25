@@ -146,7 +146,7 @@ export class EventService {
           sendNodeId,
           receiveNodeId,
           insertedEventId,
-          totalEvents,
+          totalEvents + 1,
           SocketStatus.SUCCESS,
         );
         setTimeout(() => {
@@ -174,7 +174,7 @@ export class EventService {
         sendNodeId,
         receiveNodeId,
         insertedEventId,
-        totalEvents,
+        totalEvents + 1,
         SocketStatus.FAIL,
       );
       setTimeout(() => {
