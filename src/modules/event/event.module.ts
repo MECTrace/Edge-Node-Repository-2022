@@ -10,9 +10,12 @@ import { Node } from '../node/entity/node.entity';
 import { SocketIoClientProxyService } from '../../socket-io-client-proxy/socket-io-client-proxy.service';
 import { SocketIoClientProvider } from '../../socket-io-client-proxy/socket-io-client.provider';
 import { HttpModule } from '@nestjs/axios';
+import { HistoricalEvent } from '../historical-event/entity/historical-event.entity';
+import { HistoricalEventService } from '../historical-event/service/historical-event.service';
 
 @Module({
   imports: [
+    TypeOrmModule.forFeature([HistoricalEvent]),
     TypeOrmModule.forFeature([Event]),
     TypeOrmModule.forFeature([File]),
     TypeOrmModule.forFeature([Node]),
@@ -20,6 +23,7 @@ import { HttpModule } from '@nestjs/axios';
   ],
   controllers: [EventController],
   providers: [
+    HistoricalEventService,
     EventService,
     SocketIoClientProxyService,
     FileService,

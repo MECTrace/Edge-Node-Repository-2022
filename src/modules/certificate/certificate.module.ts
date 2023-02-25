@@ -13,10 +13,13 @@ import { FileService } from '../file/service/file.service';
 import { EventGateway } from '../event/event.gateway';
 import { SocketIoClientProxyService } from 'src/socket-io-client-proxy/socket-io-client-proxy.service';
 import { SocketIoClientProvider } from 'src/socket-io-client-proxy/socket-io-client.provider';
+import { HistoricalEvent } from '../historical-event/entity/historical-event.entity';
+import { HistoricalEventService } from '../historical-event/service/historical-event.service';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Certificate]),
+    TypeOrmModule.forFeature([HistoricalEvent]),
     TypeOrmModule.forFeature([Event]),
     TypeOrmModule.forFeature([Node]),
     TypeOrmModule.forFeature([File]),
@@ -25,6 +28,7 @@ import { SocketIoClientProvider } from 'src/socket-io-client-proxy/socket-io-cli
   controllers: [CertificateController],
   providers: [
     CertificateService,
+    HistoricalEventService,
     EventService,
     NodeService,
     FileService,

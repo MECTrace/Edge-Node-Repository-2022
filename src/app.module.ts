@@ -8,6 +8,7 @@ import { NodeModule } from './modules/node/node.module';
 import { SocketIoClientProvider } from './socket-io-client-proxy/socket-io-client.provider';
 import { SocketIoClientProxyService } from './socket-io-client-proxy/socket-io-client-proxy.service';
 import { CertificateModule } from './modules/certificate/certificate.module';
+import { HistoricalEventModule } from './modules/historical-event/historical-event.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { CertificateModule } from './modules/certificate/certificate.module';
     NodeModule,
     EventModule,
     CertificateModule,
+    HistoricalEventModule,
   ],
   providers: [SocketIoClientProvider, SocketIoClientProxyService],
 })

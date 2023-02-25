@@ -15,6 +15,7 @@ import { SocketIoClientProxyService } from 'src/socket-io-client-proxy/socket-io
 import { HttpService } from '@nestjs/axios';
 import * as fs from 'fs';
 import * as https from 'https';
+import { HistoricalEventService } from 'src/modules/historical-event/service/historical-event.service';
 
 @Injectable()
 export class EventService {
@@ -34,6 +35,7 @@ export class EventService {
     private fileService: FileService,
     private httpService: HttpService,
     private readonly socketIoClientProxyService: SocketIoClientProxyService,
+    private historicalEventService: HistoricalEventService,
   ) {}
 
   async upload(prefix: string, file: Express.Multer.File) {
@@ -91,6 +93,9 @@ export class EventService {
       status: STATUS.PENDING,
       fileId: fileId,
     });
+    const totalEvents = (
+      await this.getNumberOfFilesUpload(sendNodeId, receiveNodeId)
+    ).total;
     const insertedEventId: string = createdEvent.raw[0].id;
 
     this.socketIoClientProxyService.emit(SocketEvents.NODE_INIT, {
@@ -102,7 +107,7 @@ export class EventService {
 
     try {
       const infoCurrentNode = await this.nodeService.getCPUCurrentNode();
-      const cpu = infoCurrentNode['cpuUsage']
+      const cpu = infoCurrentNode['cpuUsage'];
 
       if (cpu < cpu_limit) {
         // accept to send file
@@ -126,6 +131,7 @@ export class EventService {
         } catch {
           // throw error
           console.log('[Error] Cannot send file');
+          throw Error();
         }
 
         // upload to backup
@@ -136,6 +142,13 @@ export class EventService {
         await this.update(insertedEventId, STATUS.SUCCESS);
         isSuccess = true;
 
+        await this.historicalEventService.updateOne(
+          sendNodeId,
+          receiveNodeId,
+          insertedEventId,
+          totalEvents,
+          SocketStatus.SUCCESS,
+        );
         setTimeout(() => {
           this.socketIoClientProxyService.emit(SocketEvents.NODE_UPDATE, {
             id: insertedEventId,
@@ -157,6 +170,13 @@ export class EventService {
       await this.fileService.update(findFileId, path);
       await this.update(insertedEventId, STATUS.FAIL);
 
+      await this.historicalEventService.updateOne(
+        sendNodeId,
+        receiveNodeId,
+        insertedEventId,
+        totalEvents,
+        SocketStatus.FAIL,
+      );
       setTimeout(() => {
         this.socketIoClientProxyService.emit(SocketEvents.NODE_UPDATE, {
           id: insertedEventId,
@@ -373,6 +393,42 @@ export class EventService {
         status: 'Succeeded',
       })
       .getCount();
+    return { total, numberOfFailed, numberOfSucceed };
+  }
+
+  async getNumberOfFilesUpload(sendNodeId: string, receiveNodeId: string) {
+    const repo = this.eventRepository;
+    let numberOfFailed = 0;
+    let numberOfSucceed = 0;
+    try {
+      numberOfFailed = await repo
+        .createQueryBuilder()
+        .select()
+        .where({
+          status: 'Failed',
+          sendNodeId: sendNodeId,
+          receiveNodeId: receiveNodeId,
+        })
+        .getCount();
+    } catch (err) {
+      numberOfFailed = 0;
+    }
+
+    try {
+      numberOfSucceed = await repo
+        .createQueryBuilder()
+        .select()
+        .where({
+          status: 'Succeeded',
+          sendNodeId: sendNodeId,
+          receiveNodeId: receiveNodeId,
+        })
+        .getCount();
+    } catch (err) {
+      numberOfSucceed = 0;
+    }
+
+    const total = numberOfFailed + numberOfSucceed;
     return { total, numberOfFailed, numberOfSucceed };
   }
 }

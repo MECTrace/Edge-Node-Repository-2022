@@ -8,6 +8,7 @@ import { AppModule } from './app.module';
 import { WEB_SOCKET_GATEWAY } from './constants';
 import { SocketIoClientProvider } from './socket-io-client-proxy/socket-io-client.provider';
 import { SocketIoClientStrategy } from './socket-io-client-proxy/socket-io-client.strategy';
+import { GlobalExceptionFilter } from './all-exceptions.filter';
 
 const httpCert = () => {
   const keyPath = 'cert/edge-key.pem';
@@ -61,6 +62,7 @@ async function bootstrap() {
       whitelist: true,
     }),
   );
+  app.useGlobalFilters(new GlobalExceptionFilter());
 
   const options = new DocumentBuilder()
     .setTitle('Penta Security')
