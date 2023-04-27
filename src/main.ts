@@ -6,8 +6,6 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as fs from 'fs';
 import { AppModule } from './app.module';
 import { WEB_SOCKET_GATEWAY } from './constants';
-import { SocketIoClientProvider } from './socket-io-client-proxy/socket-io-client.provider';
-import { SocketIoClientStrategy } from './socket-io-client-proxy/socket-io-client.strategy';
 import { GlobalExceptionFilter } from './all-exceptions.filter';
 
 const httpCert = () => {
@@ -42,14 +40,6 @@ async function bootstrap() {
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     httpsOptions,
-  });
-
-  const socketIoClientProvider = app.get<SocketIoClientProvider>(
-    SocketIoClientProvider,
-  );
-
-  app.connectMicroservice<MicroserviceOptions>({
-    strategy: new SocketIoClientStrategy(socketIoClientProvider.getSocket()),
   });
 
   app.enableCors(WEB_SOCKET_GATEWAY);

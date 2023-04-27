@@ -11,7 +11,6 @@ import { FileService } from 'src/modules/file/service/file.service';
 import { SocketEvents, SocketStatus, STATUS, ROOT_CA } from 'src/constants';
 import * as FormData from 'form-data';
 import { lastValueFrom } from 'rxjs';
-import { SocketIoClientProxyService } from 'src/socket-io-client-proxy/socket-io-client-proxy.service';
 import { HttpService } from '@nestjs/axios';
 import * as fs from 'fs';
 import * as https from 'https';
@@ -34,7 +33,7 @@ export class EventService {
     private nodeService: NodeService,
     private fileService: FileService,
     private httpService: HttpService,
-    private readonly socketIoClientProxyService: SocketIoClientProxyService,
+    // private readonly socketIoClientProxyService: SocketIoClientProxyService,
     private historicalEventService: HistoricalEventService,
   ) {}
 
@@ -98,12 +97,12 @@ export class EventService {
     ).total;
     const insertedEventId: string = createdEvent.raw[0].id;
 
-    this.socketIoClientProxyService.emit(SocketEvents.NODE_INIT, {
-      id: insertedEventId,
-      receiveNodeId,
-      sendNodeId,
-      status: SocketStatus.PENDING,
-    });
+    // this.socketIoClientProxyService.emit(SocketEvents.NODE_INIT, {
+    //   id: insertedEventId,
+    //   receiveNodeId,
+    //   sendNodeId,
+    //   status: SocketStatus.PENDING,
+    // });
 
     try {
       const infoCurrentNode = await this.nodeService.getCPUCurrentNode();
@@ -150,12 +149,12 @@ export class EventService {
           SocketStatus.SUCCESS,
         );
         setTimeout(() => {
-          this.socketIoClientProxyService.emit(SocketEvents.NODE_UPDATE, {
-            id: insertedEventId,
-            receiveNodeId,
-            sendNodeId,
-            status: SocketStatus.SUCCESS,
-          });
+          // this.socketIoClientProxyService.emit(SocketEvents.NODE_UPDATE, {
+          //   id: insertedEventId,
+          //   receiveNodeId,
+          //   sendNodeId,
+          //   status: SocketStatus.SUCCESS,
+          // });
         }, 2000);
       } else {
         // throw error
@@ -178,21 +177,21 @@ export class EventService {
         SocketStatus.FAIL,
       );
       setTimeout(() => {
-        this.socketIoClientProxyService.emit(SocketEvents.NODE_UPDATE, {
-          id: insertedEventId,
-          receiveNodeId,
-          sendNodeId,
-          status: SocketStatus.FAIL,
-        });
+        // this.socketIoClientProxyService.emit(SocketEvents.NODE_UPDATE, {
+        //   id: insertedEventId,
+        //   receiveNodeId,
+        //   sendNodeId,
+        //   status: SocketStatus.FAIL,
+        // });
       }, 2000);
     } finally {
       setTimeout(() => {
-        this.socketIoClientProxyService.emit(SocketEvents.NODE_UPDATE, {
-          id: insertedEventId,
-          receiveNodeId,
-          sendNodeId,
-          status: SocketStatus.DONE,
-        });
+        // this.socketIoClientProxyService.emit(SocketEvents.NODE_UPDATE, {
+        //   id: insertedEventId,
+        //   receiveNodeId,
+        //   sendNodeId,
+        //   status: SocketStatus.DONE,
+        // });
       }, 4000);
     }
     return {

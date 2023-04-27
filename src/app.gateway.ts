@@ -6,6 +6,7 @@ import {
   OnGatewayInit,
   WebSocketGateway,
   WebSocketServer,
+  SubscribeMessage,
 } from '@nestjs/websockets';
 import 'dotenv/config';
 import { Server, Socket } from 'socket.io';

@@ -10,9 +10,6 @@ import { CertificateService } from './service/certificate.service';
 import { NodeService } from '../node/service/node.service';
 import { File } from '../file/entity/file.entity';
 import { FileService } from '../file/service/file.service';
-import { EventGateway } from '../event/event.gateway';
-import { SocketIoClientProxyService } from 'src/socket-io-client-proxy/socket-io-client-proxy.service';
-import { SocketIoClientProvider } from 'src/socket-io-client-proxy/socket-io-client.provider';
 import { HistoricalEvent } from '../historical-event/entity/historical-event.entity';
 import { HistoricalEventService } from '../historical-event/service/historical-event.service';
 
@@ -32,8 +29,6 @@ import { HistoricalEventService } from '../historical-event/service/historical-e
     EventService,
     NodeService,
     FileService,
-    SocketIoClientProxyService,
-    SocketIoClientProvider,
   ],
   exports: [CertificateService],
 })

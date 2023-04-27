@@ -10,7 +10,6 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { SocketEvents, SocketStatus, STATUS, ROOT_CA } from 'src/constants';
 import { NodeService } from 'src/modules/node/service/node.service';
-import { SocketIoClientProxyService } from 'src/socket-io-client-proxy/socket-io-client-proxy.service';
 import { FileService } from '../../file/service/file.service';
 import { FileUploadDto } from '../dto/fileUpload.dto';
 import { IEventResult, IGetBySendNodeId, IInsertResult } from '../interface';
@@ -31,8 +30,8 @@ export class EventController {
     private fileService: FileService,
     private nodeService: NodeService,
     private httpService: HttpService,
-    private readonly socketIoClientProxyService: SocketIoClientProxyService,
-  ) {}
+  ) // private readonly socketIoClientProxyService: SocketIoClientProxyService,
+  {}
 
   @Post('upload')
   @UseInterceptors(
@@ -146,7 +145,7 @@ export class EventController {
         availableNodeData = data;
       }
 
-      const receiveNode = availableNodeData['availableNode']
+      const receiveNode = availableNodeData['availableNode'];
 
       await this.eventService.reSend(file, {
         sendNode: nodeName,
