@@ -1,9 +1,9 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, UploadedFile } from '@nestjs/common';
 import { io, Socket } from 'socket.io-client';
 import * as fs from 'fs';
-import { OnApplicationBootstrap } from '@nestjs/common';
+
 @Injectable()
-export class SocketClient implements OnModuleInit, OnApplicationBootstrap {
+export class ClientGateway {
   public socketClient: Socket;
 
   constructor() {
@@ -11,20 +11,25 @@ export class SocketClient implements OnModuleInit, OnApplicationBootstrap {
     this.socketClient = io(process.env.CLOUD_URL, {
       ca: fs.existsSync(rootCA) && fs.readFileSync(rootCA).toString(),
       extraHeaders: {
-        node_id: process.env.NODE_ID,
+        nodeId: process.env.NODE_ID,
       },
     });
-  }
 
-  onModuleInit() {
     this.socketClient.on('connection', (data) => {
       console.log('Connected to', data.server);
     });
+
+    this.socketClient.on('send-data', (data) => {
+      console.log(data);
+    });
   }
 
-  onApplicationBootstrap() {
-    this.socketClient.on('sendData', (data) => {
-      console.log('xxx', data);
+  sendData(@UploadedFile() file: Express.Multer.File, receiveNodeId: string) {
+    this.socketClient.emit('send-data', {
+      sendNodeId: process.env.NODE_ID,
+      receiveNodeId: receiveNodeId,
+      data: file,
+      timestamp: new Date().getTime(),
     });
   }
 }

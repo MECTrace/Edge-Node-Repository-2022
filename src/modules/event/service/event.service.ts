@@ -15,6 +15,7 @@ import { HttpService } from '@nestjs/axios';
 import * as fs from 'fs';
 import * as https from 'https';
 import { HistoricalEventService } from 'src/modules/historical-event/service/historical-event.service';
+import { ClientGateway } from 'src/modules/gateway/gateway-client';
 
 @Injectable()
 export class EventService {
@@ -34,6 +35,7 @@ export class EventService {
     private fileService: FileService,
     private httpService: HttpService,
     // private readonly socketIoClientProxyService: SocketIoClientProxyService,
+    private socketClient: ClientGateway,
     private historicalEventService: HistoricalEventService,
   ) {}
 
@@ -429,5 +431,133 @@ export class EventService {
 
     const total = numberOfFailed + numberOfSucceed;
     return { total, numberOfFailed, numberOfSucceed };
+  }
+
+  async getPolicyByNodeId(receiveNodeId: string) {
+    const rejectUnauthorized = process.env.NODE_ENV == 'PROD' ? true : false;
+
+    const httpsAgent = new https.Agent({
+      ca: fs.readFileSync(ROOT_CA).toString(),
+      rejectUnauthorized: rejectUnauthorized,
+    });
+
+    const policyURL =
+      process.env.CLOUD_URL +
+      `/api/policyManager/getPolicyByNodeId/${receiveNodeId}`;
+
+    try {
+      const { data } = await lastValueFrom(
+        this.httpService.get(policyURL, {
+          httpsAgent,
+        }),
+      );
+      return data;
+    } catch (err) {
+      console.error(`Error fetching policy from ${policyURL}:`, err);
+    }
+  }
+
+  async sendData(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() post: { receiveNodeId: string },
+  ) {
+    return this.getPolicyByNodeId(post.receiveNodeId);
+    // define some variables for convenience
+    // const sendNodeId = process.env.NODE_ID;
+    // const receiveNodeId = post.receiveNodeId;
+    //   // path backup azure storage
+    //   const path =
+    //     `/${process.env.AZURE_STORAGE_CONTAINER}` +
+    //     `/${process.env.VM_NAME}/${file.originalname}`;
+    //   // set pivot to check condition to send File
+    //   let isSuccess = false;
+    // get policy of receiveNode to find CPU limit
+    // const policy: Array<ResPoliceByNodeId> =
+    //   await this.policyManagerService.getPolicyByNodeId(receiveNodeId);
+    //   // get some properties about node policy
+    //   const policyName = policy[0].policyName;
+    //   const cpuLimit = policy[0].cpuOverPercent;
+    //   const cpuLessThanPercent = policy[0].cpuLessThanPercent;
+    //   const numberResendNode = policy[0].numberResendNode;
+    //   // create file Id
+    //   const fileId = await this.createFilePath(file, path);
+    //   // create event
+    //   const insertedEventId: string = await this.createEvent(
+    //     sendNodeId,
+    //     receiveNodeId,
+    //     policyName,
+    //     fileId,
+    //   );
+    //   // emit status PENDING for event send file (FE)
+    //   this.socketClient.server.emit(SocketEvents.NODE_INIT, {
+    //     id: insertedEventId,
+    //     receiveNodeId,
+    //     sendNodeId,
+    //     status: SocketStatus.PENDING,
+    //   });
+    //   try {
+    //     // get cpu of receive node
+    //     const infoCPUNode = await this.nodeService.getCPUByNodeId(
+    //       post.receiveNode,
+    //     );
+    //     const cpu = infoCPUNode.cpuUsage;
+    //     if (cpu < cpuLimit) {
+    //       // accept to send file
+    //       this.eventGateway.sendData(file, post.receiveNode);
+    //       // update event and file table
+    //       await this.fileService.update(fileId, path);
+    //       // update status send file event
+    //       await this.update(insertedEventId, STATUS.SUCCESS);
+    //       this.eventGateway.server.emit(SocketEvents.CENTRAL_UPDATE, {
+    //         id: insertedEventId,
+    //         receiveNodeId,
+    //         sendNodeId,
+    //         status: SocketStatus.SUCCESS,
+    //       });
+    //       isSuccess = true;
+    //     } else {
+    //       // throw error
+    //       throw Error(insertedEventId);
+    //     }
+    //   } catch {
+    //     // Cant meet cpu condition
+    //     // upload to backup
+    //     await this.upload(`${process.env.VM_NAME}/`, file);
+    //     // update event and file table
+    //     await this.fileService.update(fileId, path);
+    //     await this.update(insertedEventId, STATUS.FAIL);
+    //     this.eventGateway.server.emit(SocketEvents.CENTRAL_UPDATE, {
+    //       id: insertedEventId,
+    //       receiveNodeId,
+    //       sendNodeId,
+    //       status: SocketStatus.FAIL,
+    //     });
+    //   } finally {
+    //     this.eventGateway.server.emit(SocketEvents.CENTRAL_UPDATE, {
+    //       id: insertedEventId,
+    //       receiveNodeId,
+    //       sendNodeId,
+    //       status: SocketStatus.DONE,
+    //     });
+    //   }
+    //   if (!isSuccess) {
+    //     // get available Node
+    //     const availableNode = await this.nodeService.getAvailableNode(
+    //       process.env.NODE_ID,
+    //       cpuLessThanPercent,
+    //       numberResendNode,
+    //     );
+    //     const promises = [];
+    //     for (const node of availableNode) {
+    //       promises.push(
+    //         this.sendData(file, { receiveNode: node.nodeId }).catch((err) =>
+    //           console.log(err),
+    //         ),
+    //       );
+    //     }
+    //     Promise.all(promises)
+    //       .then((response) => console.log(response))
+    //       .catch((err) => console.log(err));
+    //   }
   }
 }

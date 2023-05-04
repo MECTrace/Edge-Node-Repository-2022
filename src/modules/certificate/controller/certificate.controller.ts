@@ -1,14 +1,15 @@
 import { Controller, Delete, Get } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import * as fs from 'fs';
-import { EventService } from 'src/modules/event/service/event.service';
 import { CertificateService } from '../service/certificate.service';
+import { AzureService } from 'src/modules/azure-service/service/azure-service.service';
+
 @ApiTags('certificate')
 @Controller('certificate')
 export class CertificateController {
   constructor(
     private certificateService: CertificateService,
-    private eventService: EventService,
+    private azureService: AzureService,
   ) {}
 
   @Get('forceUploadCertificate')
@@ -24,7 +25,7 @@ export class CertificateController {
 
       const cert = fs.readFileSync(`cert/${process.env.NODE_CERT}`);
 
-      await this.eventService.forceUploadCertificates(
+      await this.azureService.forceUploadCertificates(
         cert,
         process.env.NODE_CERT,
       );

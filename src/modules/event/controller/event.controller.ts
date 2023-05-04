@@ -1,13 +1,14 @@
 import {
   Body,
   Controller,
+  Get,
   Post,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiTags, ApiOkResponse } from '@nestjs/swagger';
 import { SocketEvents, SocketStatus, STATUS, ROOT_CA } from 'src/constants';
 import { NodeService } from 'src/modules/node/service/node.service';
 import { FileService } from '../../file/service/file.service';
@@ -21,6 +22,8 @@ import { lastValueFrom } from 'rxjs';
 import * as FormData from 'form-data';
 import * as fs from 'fs';
 import * as https from 'https';
+import { ClientGateway } from 'src/modules/gateway/gateway-client';
+import { sendDataEvent } from '../dto/fileSend.dto';
 
 @ApiTags('event')
 @Controller('event')
@@ -30,8 +33,8 @@ export class EventController {
     private fileService: FileService,
     private nodeService: NodeService,
     private httpService: HttpService,
-  ) // private readonly socketIoClientProxyService: SocketIoClientProxyService,
-  {}
+    private socketClient: ClientGateway, // private readonly socketIoClientProxyService: SocketIoClientProxyService,
+  ) {}
 
   @Post('upload')
   @UseInterceptors(
@@ -205,5 +208,22 @@ export class EventController {
       policyName: policy[0].policyName,
     };
     return this.eventService.uploadFromNode(file, postBody);
+  }
+
+  @Post('sendData')
+  @UseInterceptors(FileInterceptor('fileUpload'))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    type: sendDataEvent,
+  })
+  async sendData(
+    @UploadedFile() fileUpload: Express.Multer.File,
+    @Body() post: { receiveNodeId: string },
+  ) {
+    // send data
+    return this.eventService.sendData(fileUpload, {
+      receiveNodeId: post.receiveNodeId,
+    });
+    // return this.socketClient.sendData(fileUpload, post.receiveNode);
   }
 }
