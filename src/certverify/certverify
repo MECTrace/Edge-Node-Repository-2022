@@ -57,3 +57,4 @@ def verify_signature(cert_data, data, signature):
         return False, str(e)
     
 def main():
+    private_key, certificate = generate_certificate()
