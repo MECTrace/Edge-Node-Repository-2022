@@ -4,5 +4,10 @@ import shutil
 
 def calculate_hash(file_path):
     hasher = hashlib.sha256()  # 해시 알고리즘 선택 (SHA-256 사용)
-
+    with open(file_path, 'rb') as file:
+        while True:
+            data = file.read(8192)  # 파일을 8192바이트씩 읽음
+            if not data:
+                break
+            hasher.update(data)
     return hasher.hexdigest()  # 해시값 리턴
