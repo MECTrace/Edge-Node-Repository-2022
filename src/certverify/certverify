@@ -37,3 +37,6 @@ def generate_certificate():
             encryption_algorithm=serialization.NoEncryption()
 
         ))
+
+    with open("certificate.pem", "wb") as cert_file:
+        cert_file.write(certificate.public_bytes(serialization.Encoding.PEM))
