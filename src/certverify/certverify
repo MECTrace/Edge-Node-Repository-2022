@@ -46,3 +46,9 @@ def generate_certificate():
 def verify_signature(cert_data, data, signature):
     try:
         cert = x509.load_pem_x509_certificate(cert_data, default_backend())
+        cert.public_key().verify(
+            signature,
+            data,
+            padding.PKCS1v15(),
+            hashes.SHA256()
+        )
