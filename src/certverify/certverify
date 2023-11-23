@@ -12,7 +12,7 @@ def generate_certificate():
         backend=default_backend()
     )
 
-        # Create a self-signed certificate
+    # Create a self-signed certificate
     subject = issuer = x509.Name([
         x509.NameAttribute(x509.NameOID.COMMON_NAME, u"Your CN"),
     ])
@@ -29,7 +29,8 @@ def generate_certificate():
         algorithm=hashes.SHA256(),
         backend=default_backend()
     )
-
+    
+    # Save the private key and certificate to files
     with open("private_key.pem", "wb") as key_file:
         key_file.write(private_key.private_bytes( 
             encoding=serialization.Encoding.PEM,
@@ -57,11 +58,14 @@ def verify_signature(cert_data, data, signature):
         return False, str(e)
     
 def main():
+    # Generate certificate
     private_key, certificate = generate_certificate()
 
+    # Simulating data and signature verification failure
     fake_data = b"Fake data"
     fake_signature = b"Fake signature"
 
+    # Check signature
     with open("certificate.pem", "rb") as cert_file:
         cert_data = cert_file.read()
         verification_result = verify_signature(cert_data, fake_data, fake_signature)
