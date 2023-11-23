@@ -21,3 +21,10 @@ def verify_integrity(source_directory, backup_directory, hash_directory):
             # 원본 파일의 백업된 파일 경로
             backup_path = os.path.join(backup_directory, file_name) + ".backup"
             hash_file_path = os.path.join(hash_directory, file_name) + ".hash"
+
+            if not os.path.exists(backup_path) or not os.path.exists(hash_file_path):
+                continue
+
+            # 원본 파일의 저장된 해시값 불러오기
+            with open(hash_file_path, 'r') as hash_file:
+                stored_hash = hash_file.read().strip()  # 저장된 해시값
