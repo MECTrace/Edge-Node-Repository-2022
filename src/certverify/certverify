@@ -1,0 +1,6 @@
+from cryptography import x509
+from cryptography.hazmat.primitives import serialization
+
+def generate_certificate():
+    # Generate a private key
+    )
