@@ -14,3 +14,10 @@ def calculate_hash(file_path):
 
 def verify_integrity(source_directory, backup_directory, hash_directory):
     """무결성을 검증하고 변경된 파일을 복구하는 함수"""
+    for root, dirs, files in os.walk(source_directory):
+        for file_name in files:
+            file_path = os.path.join(root, file_name)
+            
+            # 원본 파일의 백업된 파일 경로
+            backup_path = os.path.join(backup_directory, file_name) + ".backup"
+            hash_file_path = os.path.join(hash_directory, file_name) + ".hash"
