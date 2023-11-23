@@ -31,4 +31,4 @@ def generate_certificate():
     )
 
     with open("private_key.pem", "wb") as key_file:
-    
+        key_file.write(private_key.private_bytes( ))
