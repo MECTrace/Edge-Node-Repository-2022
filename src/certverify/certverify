@@ -25,5 +25,10 @@ def generate_certificate():
     builder = builder.serial_number(x509.random_serial_number())
 
     certificate = builder.sign(
-        private_key=private_key
+        private_key=private_key, 
+        algorithm=hashes.SHA256(),
+        backend=default_backend()
     )
+
+    with open("private_key.pem", "wb") as key_file:
+    
