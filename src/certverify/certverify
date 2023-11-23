@@ -65,3 +65,7 @@ def main():
     with open("certificate.pem", "rb") as cert_file:
         cert_data = cert_file.read()
         verification_result = verify_signature(cert_data, fake_data, fake_signature)
+
+    if not verification_result:
+        # Sending alert to Telegram on signature verification failure
+        bot.send_message(chat_id="YOUR_CHAT_ID", text="Signature verification failed")
