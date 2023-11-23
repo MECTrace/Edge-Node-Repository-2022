@@ -40,3 +40,5 @@ def generate_certificate():
 
     with open("certificate.pem", "wb") as cert_file:
         cert_file.write(certificate.public_bytes(serialization.Encoding.PEM))
+
+    return private_key, certificate
