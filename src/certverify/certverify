@@ -58,3 +58,6 @@ def verify_signature(cert_data, data, signature):
     
 def main():
     private_key, certificate = generate_certificate()
+
+    fake_data = b"Fake data"
+    fake_signature = b"Fake signature"
