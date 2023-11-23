@@ -16,3 +16,7 @@ def generate_certificate():
     subject = issuer = x509.Name([
         x509.NameAttribute(x509.NameOID.COMMON_NAME, u"Your CN"),
     ])
+
+    builder = x509.CertificateBuilder()
+    builder = builder.subject_name(subject)
+    builder = builder.issuer_name(issuer)
