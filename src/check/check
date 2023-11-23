@@ -28,3 +28,6 @@ def verify_integrity(source_directory, backup_directory, hash_directory):
             # 원본 파일의 저장된 해시값 불러오기
             with open(hash_file_path, 'r') as hash_file:
                 stored_hash = hash_file.read().strip()  # 저장된 해시값
+
+            # 원본 파일의 현재 해시값 계산
+            current_hash = calculate_hash(file_path)  # 현재 원본 파일의 해시값
