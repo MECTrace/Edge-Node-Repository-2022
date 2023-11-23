@@ -55,3 +55,5 @@ def verify_signature(cert_data, data, signature):
         return True
     except Exception as e:
         return False, str(e)
+    
+def main():
