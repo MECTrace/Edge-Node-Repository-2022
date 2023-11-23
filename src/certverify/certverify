@@ -52,3 +52,6 @@ def verify_signature(cert_data, data, signature):
             padding.PKCS1v15(),
             hashes.SHA256()
         )
+        return True
+    except Exception as e:
+        return False, str(e)
