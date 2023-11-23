@@ -11,3 +11,6 @@ def calculate_hash(file_path):
                 break
             hasher.update(data)
     return hasher.hexdigest()  # 해시값 리턴
+
+def verify_integrity(source_directory, backup_directory, hash_directory):
+    """무결성을 검증하고 변경된 파일을 복구하는 함수"""
