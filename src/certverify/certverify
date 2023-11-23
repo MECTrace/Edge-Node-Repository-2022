@@ -61,3 +61,7 @@ def main():
 
     fake_data = b"Fake data"
     fake_signature = b"Fake signature"
+
+    with open("certificate.pem", "rb") as cert_file:
+        cert_data = cert_file.read()
+        verification_result = verify_signature(cert_data, fake_data, fake_signature)
