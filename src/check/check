@@ -2,3 +2,7 @@ import hashlib
 import os
 import shutil
 
+def calculate_hash(file_path):
+    hasher = hashlib.sha256()  # 해시 알고리즘 선택 (SHA-256 사용)
+
+    return hasher.hexdigest()  # 해시값 리턴
