@@ -11,3 +11,8 @@ def generate_certificate():
         key_size=2048,
         backend=default_backend()
     )
+
+        # Create a self-signed certificate
+    subject = issuer = x509.Name([
+        x509.NameAttribute(x509.NameOID.COMMON_NAME, u"Your CN"),
+    ])
