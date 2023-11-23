@@ -31,3 +31,10 @@ def verify_integrity(source_directory, backup_directory, hash_directory):
 
             # 원본 파일의 현재 해시값 계산
             current_hash = calculate_hash(file_path)  # 현재 원본 파일의 해시값
+
+            # 무결성 검증 및 파일 복구
+            if current_hash != stored_hash:
+                print(f"위조가 감지된 파일: {file_path}")
+                print("복구를 시도합니다...")
+            else:
+                print(f"파일 '{file_path}'의 무결성이 확인되었습니다.")
