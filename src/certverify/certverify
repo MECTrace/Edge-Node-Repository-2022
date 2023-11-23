@@ -69,3 +69,6 @@ def main():
     if not verification_result:
         # Sending alert to Telegram on signature verification failure
         bot.send_message(chat_id="YOUR_CHAT_ID", text="Signature verification failed")
+
+if __name__ == "__main__":
+    main()
